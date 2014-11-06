@@ -1,4 +1,5 @@
-# Copyright (C) 2014 The Android Open Source Project
+#
+# Copyright (C) 2014 The Android-x86 Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,15 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
-$(call inherit-product, device/generic/armv7-a-neon/mini_common.mk)
+$(call inherit-product,$(SRC_TARGET_DIR)/product/core_64_bit.mk)
 
-PRODUCT_NAME := mini_x86_64
+# includes the base of Android-x86 platform
+$(call inherit-product,device/generic/common/x86.mk)
+
+# Overrides
+PRODUCT_NAME := android_x86_64
+PRODUCT_BRAND := Android-x86
 PRODUCT_DEVICE := x86_64
-PRODUCT_BRAND := Android
-PRODUCT_MODEL := Mini for x86_64
-
-# default is nosdcard, S/W button enabled in resource
-DEVICE_PACKAGE_OVERLAYS := device/generic/x86/overlay
-PRODUCT_CHARACTERISTICS := nosdcard
+PRODUCT_MODEL := Generic Android-x86_64
