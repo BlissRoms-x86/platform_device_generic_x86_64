@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+PRODUCT_PROPERTY_OVERRIDES := \
+    ro.dalvik.vm.isa.arm64=x86_64 \
+    ro.enable.native.bridge.exec64=1 \
+
 $(call inherit-product,$(SRC_TARGET_DIR)/product/core_64_bit.mk)
 
 # includes the base of Android-x86 platform
