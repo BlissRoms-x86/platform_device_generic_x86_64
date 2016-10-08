@@ -1,0 +1,8 @@
+[
+  {
+    "remote": "github", 
+    "repository": "BlissRoms-x86/device_generic_common",
+    "target_path": "device/generic/common",
+    "revision": "mm6.0"
+  }
+]
