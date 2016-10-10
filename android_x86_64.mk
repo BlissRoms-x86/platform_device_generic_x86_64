@@ -14,10 +14,8 @@
 # limitations under the License.
 #
 
-$(call inherit-product,$(SRC_TARGET_DIR)/product/core_64_bit.mk)
-
 # includes the base of Android-x86 platform
-$(call inherit-product,device/generic/common/x86.mk)
+$(call inherit-product,device/generic/common/x86_64.mk)
 
 # Overrides
 PRODUCT_NAME := cm_android_x86_64
