@@ -18,7 +18,10 @@
 $(call inherit-product,device/generic/common/x86_64.mk)
 
 # Overrides
-PRODUCT_NAME := android_x86_64
+PRODUCT_NAME := bliss_android_x86_64
 PRODUCT_BRAND := Android-x86
 PRODUCT_DEVICE := x86_64
 PRODUCT_MODEL := Generic Android-x86_64
+
+PRODUCT_BUILD_PROP_OVERRIDES += \
+    PRODUCT_NAME=android_x86_64 \
