@@ -14,14 +14,8 @@
 # limitations under the License.
 #
 
-# This file is executed by build/envsetup.sh, and can use anything
-# defined in envsetup.sh.
-#
-# In particular, you can add lunch options with the add_lunch_combo
-# function: add_lunch_combo generic-eng
+# Release name
+PRODUCT_RELEASE_NAME := android_x86_64
 
-add_lunch_combo bliss_android_x86_64-eng
-add_lunch_combo bliss_android_x86_64-userdebug
-add_lunch_combo bliss_android_x86_64-user
-
-
+# Inherit device configuration
+$(call inherit-product, $(LOCAL_PATH)/android_x86_64.mk)
