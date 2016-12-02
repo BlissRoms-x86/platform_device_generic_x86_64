@@ -19,6 +19,9 @@ $(call inherit-product, vendor/bliss/config/common.mk)
 # Inherit device configuration
 $(call inherit-product, $(LOCAL_PATH)/android_x86_64.mk)
 
+# includes the base of Android-x86 platform
+$(call inherit-product,device/generic/common/x86_64.mk)
+
 # Device identifier. This must come after all inclusions
 PRODUCT_NAME := bliss_android_x86_64
 PRODUCT_BRAND := Android-x86
