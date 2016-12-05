@@ -15,8 +15,8 @@
 #
 
 # Boot animation
-TARGET_SCREEN_HEIGHT := 1920
-TARGET_SCREEN_WIDTH := 1080
+TARGET_SCREEN_HEIGHT := 1080    
+TARGET_SCREEN_WIDTH := 1920
 
 # Inherit Bliss vendor
 $(call inherit-product, vendor/bliss/config/common.mk)
