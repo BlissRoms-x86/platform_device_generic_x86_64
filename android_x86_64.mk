@@ -14,11 +14,18 @@
 # limitations under the License.
 #
 
+# Boot animation
+TARGET_SCREEN_HEIGHT := 1080    
+TARGET_SCREEN_WIDTH := 1920
+
+# Inherit Bliss vendor
+$(call inherit-product, vendor/bliss/config/common.mk)
+
 # includes the base of Android-x86 platform
 $(call inherit-product,device/generic/common/x86_64.mk)
 
 # Overrides
-PRODUCT_NAME := android_x86_64
+PRODUCT_NAME := bliss_android_x86_64
 PRODUCT_BRAND := Android-x86
 PRODUCT_DEVICE := x86_64
 PRODUCT_MODEL := Generic Android-x86_64
