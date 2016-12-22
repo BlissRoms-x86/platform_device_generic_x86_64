@@ -21,5 +21,8 @@ TARGET_SCREEN_WIDTH := 1920
 # Inherit device configuration
 $(call inherit-product, $(LOCAL_PATH)/android_x86_64.mk)
 
+# Get SuperSU
+$(call inherit-product-if-exists, vendor/supersu/vendor_x64.mk)
+
 # Release name
 PRODUCT_RELEASE_NAME := android_x86_64
