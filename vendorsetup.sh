@@ -14,5 +14,12 @@
 # limitations under the License.
 #
 
-PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/android_x86_64.mk
+# This file is executed by build/envsetup.sh, and can use anything
+# defined in envsetup.sh.
+#
+# In particular, you can add lunch options with the add_lunch_combo
+# function: add_lunch_combo generic-eng
+
+add_lunch_combo android_x86_64-eng
+add_lunch_combo android_x86_64-userdebug
+add_lunch_combo android_x86_64-user
