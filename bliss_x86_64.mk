@@ -14,14 +14,11 @@
 # limitations under the License.
 #
 
-PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/android_x86_64.mk \
-    $(LOCAL_DIR)/bliss_x86_64.mk
+# includes the base of Android-x86 platform
+$(call inherit-product,device/generic/common/x86_64.mk)
 
-COMMON_LUNCH_CHOICES := \
-    android_x86_64-eng \
-    android_x86_64-user \
-    android_x86_64-userdebug \
-    bliss_x86_64-eng \
-    bliss_x86_64-user \
-    bliss_x86_64-userdebug
+# Overrides
+PRODUCT_NAME := bliss_x86_64
+PRODUCT_BRAND := Android-x86
+PRODUCT_DEVICE := x86_64
+PRODUCT_MODEL := Generic Android-x86_64
