@@ -6,11 +6,11 @@
 TARGET_NO_BOOTLOADER := true
 TARGET_CPU_ABI := x86_64
 TARGET_ARCH := x86_64
-TARGET_ARCH_VARIANT := x86_64
+TARGET_ARCH_VARIANT := sandybridge
 
 TARGET_2ND_CPU_ABI := x86
 TARGET_2ND_ARCH := x86
-TARGET_2ND_ARCH_VARIANT := x86_64
+TARGET_2ND_ARCH_VARIANT := sandybridge
 
 ifeq ($(USE_LIBNDK_TRANSLATION_NB),true)
 include vendor/google/emu-x86/board/native_bridge_arm_on_x86.mk
