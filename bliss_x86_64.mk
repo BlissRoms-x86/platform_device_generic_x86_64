@@ -22,3 +22,10 @@ PRODUCT_NAME := bliss_x86_64
 PRODUCT_BRAND := Android-x86
 PRODUCT_DEVICE := x86_64
 PRODUCT_MODEL := Generic Android-x86_64
+
+# Workaround build fingerprint too long
+# Yes I faked to use release-keys, deal with it ¯\_(ツ)_/¯
+PRODUCT_BUILD_PROP_OVERRIDES += \
+    PRIVATE_BUILD_DESC="Blissful-user 11 RSV1.210329.052 0 release-keys" \
+
+BUILD_FINGERPRINT := Android-x86/Blissful/x86_64:11/RSV1.210329.052/0:user/release-keys
