@@ -13,4 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# Get the directory of this vendorsetup.sh script
+CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+
 bash bootable/aaropa/download.sh
+bash ${CURRENT_DIR}/download_sof-firmware.sh
