@@ -18,4 +18,4 @@
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 bash bootable/aaropa/download.sh
-bash ${CURRENT_DIR}/download_sof-firmware.sh
+python3 ${CURRENT_DIR}/download_sof-firmware.py --legacy

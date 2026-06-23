@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import argparse
+import subprocess
+import shutil
+import tarfile
+import pathlib
+
+VER = "2025.12.2"
+SOF_URL = f"https://github.com/thesofproject/sof-bin/releases/download/v{VER}/sof-bin-{VER}.tar.gz"
+
+SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
+ANDROID_ROOT = SCRIPT_DIR.parents[2] # device/generic/x86_64_tv -> device/generic -> device -> android_root
+DEST_LOCATION = ANDROID_ROOT / "vendor" / "intel" / "proprietary" / "sof-bin"
+TEMP_DIR = SCRIPT_DIR / ".temp"
+
+def check_and_download():
+    print("Checking SOF firmware...")
+    version_file = DEST_LOCATION / "version.txt"
+    if DEST_LOCATION.is_dir() and version_file.is_file():
+        try:
+            current_ver = version_file.read_text().strip()
+            if current_ver == VER:
+                print(f"SOF firmware v{VER} is already up to date. Skipping download.")
+                return
+        except Exception as e:
+            pass
+            
+    # Setup download command
+    download_cmd = None
+    if shutil.which("aria2c"):
+        download_cmd = ["aria2c", "-x4", "-d", str(TEMP_DIR), "-o", "sof-bin.tar.gz"]
+    elif shutil.which("wget"):
+        download_cmd = ["wget", "-O", str(TEMP_DIR / "sof-bin.tar.gz")]
+    else:
+        print("Error: Neither aria2c nor wget is installed. Please install one of them to download firmware.")
+        sys.exit(1)
+
+    # Clean and prepare temp
+    if TEMP_DIR.exists():
+        shutil.rmtree(TEMP_DIR)
+    TEMP_DIR.mkdir(parents=True)
+    
+    print(f"Downloading SOF firmware v{VER}...")
+    try:
+        subprocess.run(download_cmd + [SOF_URL], check=True)
+    except subprocess.CalledProcessError:
+        print("Error: Download failed!")
+        shutil.rmtree(TEMP_DIR)
+        sys.exit(1)
+        
+    print(f"Extracting firmware to {DEST_LOCATION}...")
+    if DEST_LOCATION.exists():
+        shutil.rmtree(DEST_LOCATION)
+    DEST_LOCATION.mkdir(parents=True)
+    
+    # Extract tar.gz (simulating --strip-components=1)
+    with tarfile.open(TEMP_DIR / "sof-bin.tar.gz", "r:gz") as tar:
+        for member in tar.getmembers():
+            parts = member.name.split('/', 1)
+            if len(parts) > 1:
+                member.name = parts[1]
+                tar.extract(member, DEST_LOCATION)
+                
+    version_file.write_text(VER + "\n")
+    shutil.rmtree(TEMP_DIR)
+    print(f"SOF firmware successfully updated to v{VER}.")
+
+def generate_build_files(legacy_mode, soong_namespace):
+    print(f"Generating Android.bp{' and Android.mk' if legacy_mode else ''}...")
+    
+    modules_by_bp = {}
+    all_module_names = []
+    symlinks = []
+    
+    # Clean up old generated build files
+    for p in DEST_LOCATION.glob("Android.*"):
+        p.unlink()
+
+    def collect_files(base_dir):
+        items = []
+        if not base_dir.is_dir():
+            return items
+        for child in base_dir.iterdir():
+            if not child.name.startswith("sof"):
+                continue
+            def recurse(path):
+                if path.is_symlink():
+                    items.append(path)
+                elif path.is_dir():
+                    for p in path.iterdir():
+                        recurse(p)
+                else:
+                    items.append(path)
+            recurse(child)
+        return items
+
+    items = collect_files(DEST_LOCATION)
+    
+    for item in items:
+        rel_path = item.relative_to(DEST_LOCATION)
+        
+        if len(rel_path.parts) == 1:
+            bp_name = "Android.root.bp"
+            sub_dir_val = "intel"
+        else:
+            top_dir = rel_path.parts[0]
+            bp_name = f"Android.{top_dir}.bp"
+            parent_rel = str(rel_path.parent)
+            sub_dir_val = "intel" if parent_rel == "." else f"intel/{parent_rel}"
+            
+        if bp_name not in modules_by_bp:
+            modules_by_bp[bp_name] = []
+            
+        module_name = "sof-firmware_" + str(rel_path).replace("/", "_")
+        
+        if item.is_symlink():
+            target = os.readlink(item)
+            if legacy_mode:
+                symlinks.append((str(rel_path), target, module_name))
+                all_module_names.append(module_name)
+            else:
+                bp_content = f"""
+install_symlink {{
+    name: "{module_name}",
+    installed_location: "firmware/intel/{rel_path}",
+    symlink_target: "{target}",
+    vendor: true,
+}}
+"""
+                modules_by_bp[bp_name].append(bp_content)
+                all_module_names.append(module_name)
+        else:
+            bp_content = f"""
+prebuilt_firmware {{
+    name: "{module_name}",
+    src: "{rel_path}",
+    sub_dir: "{sub_dir_val}",
+    filename_from_src: true,
+    vendor: true,
+}}
+"""
+            modules_by_bp[bp_name].append(bp_content)
+            all_module_names.append(module_name)
+            
+    # Write sub-bp files
+    for bp_name, contents in modules_by_bp.items():
+        with open(DEST_LOCATION / bp_name, "w") as f:
+            f.write("// Automatically generated by download_sof-firmware.py\n")
+            f.write("".join(contents))
+            
+    # Write top-level Android.bp
+    top_bp = []
+    if soong_namespace:
+        top_bp.append("soong_namespace {}")
+        top_bp.append("")
+        
+    build_files = list(modules_by_bp.keys())
+    if build_files:
+        top_bp.append("build = [")
+        for b in sorted(build_files):
+            top_bp.append(f'    "{b}",')
+        top_bp.append("]")
+        top_bp.append("")
+        
+    top_bp.append("phony {")
+    top_bp.append('    name: "sof-firmware",')
+    if all_module_names:
+        top_bp.append("    required: [")
+        for m in all_module_names:
+            top_bp.append(f'        "{m}",')
+        top_bp.append("    ],")
+    top_bp.append("}")
+    
+    with open(DEST_LOCATION / "Android.bp", "w") as f:
+        f.write("\n".join(top_bp) + "\n")
+        
+    # Write Android.mk if legacy
+    if legacy_mode and symlinks:
+        mk_content = [
+            "LOCAL_PATH := $(call my-dir)",
+            ""
+        ]
+        
+        for rel_path, target, module_name in symlinks:
+            dest_dir = f"$(TARGET_OUT_VENDOR)/firmware/intel/{os.path.dirname(rel_path)}"
+            if dest_dir.endswith("/"):
+                dest_dir = dest_dir[:-1]
+            dest_file = f"$(TARGET_OUT_VENDOR)/firmware/intel/{rel_path}"
+            
+            mk_content.extend([
+                "include $(CLEAR_VARS)",
+                f"LOCAL_MODULE := {module_name}",
+                "LOCAL_MODULE_CLASS := FAKE",
+                "LOCAL_MODULE_TAGS := optional",
+                "include $(BUILD_SYSTEM)/base_rules.mk",
+                "$(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/Android.mk",
+                f"\t@echo \"Symlink: {module_name}\"",
+                f"\tmkdir -p {dest_dir}",
+                f"\tln -sf {target} {dest_file}",
+                "\ttouch $@",
+                ""
+            ])
+        
+        with open(DEST_LOCATION / "Android.mk", "w") as f:
+            f.write("\n".join(mk_content) + "\n")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Download and generate build files for SOF firmware.")
+    parser.add_argument("--legacy", action="store_true", help="Generate Android.mk for symlinks instead of install_symlink.")
+    parser.add_argument("--soong-namespace", action="store_true", help="Add soong_namespace {} to the top of Android.bp")
+    args = parser.parse_args()
+    
+    check_and_download()
+    generate_build_files(args.legacy, args.soong_namespace)
+    print("Done!")
